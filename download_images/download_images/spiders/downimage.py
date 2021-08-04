@@ -1,10 +1,24 @@
 import scrapy
-
+from scrapy import signals
 
 class DownimageSpider(scrapy.Spider):
     name = 'downimage'
-    #allowed_domains = ['example.com']
-    start_urls = ['https://pakistaniexports.com/']
+    
+    def __init__(self, filename=None):
+        if filename:
+            with open(filename, 'r') as f:
+                self.start_urls = f.readlines()
+
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super(DownimageSpider, cls).from_crawler(crawler, *args, **kwargs)
+        crawler.signals.connect(spider.spider_closed, signal=signals.spider_closed)
+        return spider
+
+
+    def spider_closed(self, spider):
+        spider.logger.info('Spider closed: %s', spider.name)
+
 
     def parse(self, response):
         row_image_urls = response.css('img ::attr(src)').getall()
@@ -16,3 +30,6 @@ class DownimageSpider(scrapy.Spider):
         yield{
         	"image_urls":clean_image_urls
         }
+    
+    #call the method to track processing is finished
+    print("Scrapy Process Finished")
